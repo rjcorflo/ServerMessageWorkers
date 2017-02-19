@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script>
+    $(function() {
+        $("#sending-button").on("click", function() {
+           $.ajax({
+                method: "POST",
+                url: "http://192.168.99.100:5000/api/predict",
+                data: $.parseJSON($("#datos").val())
+            })
+            .done(function(data) {
+                console.log("Data Saved: ");
+                console.log(data)
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.log("Error");
+                console.log(jqXHR);
+                console.log(textStatus);
+                console.log(errorThrown);
+            });
+        });
+
+        $("#get-button").on("click", function() {
+            var getIdValue = $("#id-value").val();
+            $.ajax({
+                method: "GET",
+                url: "http://192.168.99.100:5000/api/predict/" + getIdValue
+            })
+            .done(function(data) {
+                console.log("Data Saved: ");
+                console.log(data)
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.log("Error");
+                console.log(jqXHR);
+                console.log(textStatus);
+                console.log(errorThrown);
+            });
+        });
+    });
+  </script
+</head>
+<body>
+  <textarea id="datos">
+  </textarea>
+  <input id="sending-button" type="button" value="Send data">
+  <input id="id-value" type="text"/>
+  <input id="get-button" type="button" value="Get data">
+  <div id="received-status">
+  </div>
+</body>

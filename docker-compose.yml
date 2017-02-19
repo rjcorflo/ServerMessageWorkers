@@ -1,0 +1,65 @@
+version: '2'
+services:
+  webpython:
+    build:
+      context: ./
+      dockerfile: server-python/Dockerfile
+    command: python -u app.py
+    ports:
+      - "5000:5000"
+    depends_on:
+      - rabbit
+    volumes:
+      - ./server-python:/todo
+    links:
+      - rabbit
+      - db
+  webnginx:
+    build:
+      context: ./
+      dockerfile: server/server-nginx.docker
+    image: web-nginx-1.10
+    volumes_from:
+      - appphp
+    ports:
+      - "8081:80"
+    links:
+      - appphp
+  appphp:
+    build:
+      context: ./
+      dockerfile: php/app-php-5.6.docker
+    image: app-php-5.6
+    depends_on:
+      - rabbit
+    volumes:
+      - ./server-php:/var/www
+    links:
+      - rabbit
+      - db
+  worker:
+    build:
+      context: ./
+      dockerfile: workers/Dockerfile
+    command: python -u worker.py
+    depends_on:
+      - rabbit
+      - db
+    volumes:
+      - ./workers:/todo
+    links:
+      - rabbit
+      - db
+  rabbit:
+    image: "rabbitmq:3-management"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  db:
+    image: mongo:3.0.2
+    ports:
+      - "27017:27017"
