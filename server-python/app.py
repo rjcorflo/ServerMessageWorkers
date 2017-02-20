@@ -10,14 +10,14 @@ app = Flask(__name__)
 CORS(app)
 
 client = MongoClient(
-    "192.168.99.100",
+    "db",
     27017)
 db = client.mydatabase
 
 
 @app.route('/')
 def index():
-    items = db.mydatabase.find()
+    items = db.tasks.find()
     item_list = [item for item in items]
 
     return render_template('todo.html', items=item_list)
@@ -38,7 +38,7 @@ def predict():
         "result": ""
     }
 
-    db.mydatabase.insert_one(item_doc)
+    db.tasks.insert_one(item_doc)
     logging.error("Registro insertado")
 
     # Adjuntamos el identificador para localizar la tarea desde los workers
@@ -50,7 +50,7 @@ def predict():
     send_message = json.dumps(message)
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host="192.168.99.100"))
+        host="rabbit", port=5672))
     channel = connection.channel()
 
     channel.queue_declare(queue='task_queue', durable=True)
@@ -74,7 +74,7 @@ Recupera el estado de una prediction
 @cross_origin()
 def retrieve_predict(id_prediction):
     # Recuperamos el item de la BBDD
-    items = db.mydatabase.find({"identifier": str(id_prediction)})
+    items = db.tasks.find({"identifier": str(id_prediction)})
 
     result = {}
     for item in items:

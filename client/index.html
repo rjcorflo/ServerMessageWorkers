@@ -1,59 +1,147 @@
 <!DOCTYPE html>
 <head>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your page title</title>
+  <link rel="stylesheet" href="https://unpkg.com/purecss@0.6.2/build/pure-min.css"></head>  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <style>
+    .button-success,
+    .button-error,
+    .button-warning,
+    .button-secondary {
+        color: white;
+        border-radius: 4px;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    }
+
+    .button-success {
+        background: rgb(28, 184, 65); /* this is a green */
+    }
+
+    .button-error {
+        background: rgb(202, 60, 60); /* this is a maroon */
+    }
+
+    .button-warning {
+        background: rgb(223, 117, 20); /* this is an orange */
+    }
+
+    .button-secondary {
+        background: rgb(66, 184, 221); /* this is a light blue */
+    }
+
+    .peticion {
+        background:rgb(66, 184, 221); /* this is a light blue */
+        border-radius: 4px;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        padding:5px;
+        margin:5px;
+    }
+  </style>
   <script>
-    $(function() {
-        $("#sending-button").on("click", function() {
-           $.ajax({
+    var runningPetitions = [];
+
+    function lanzarPeticion() {
+        $.ajax({
                 method: "POST",
                 url: "http://192.168.99.100:5000/api/predict",
                 data: $.parseJSON($("#datos").val())
-            })
-            .done(function(data) {
-                console.log("Data Saved: ");
-                console.log(data)
-            })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                console.log("Error");
-                console.log(jqXHR);
-                console.log(textStatus);
-                console.log(errorThrown);
+        })
+        .done(function(data) {
+            addBloqueDatos(data.identifier);
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            console.log("Error");
+            console.log(jqXHR);
+            console.log(textStatus);
+            console.log(errorThrown);
+        });
+    }
+
+    function addBloqueDatos(uuid) {
+        var html = '<div id="' + uuid + '" class="pure-u-4-24 peticion">' +
+                   '<div class="pure-u-6-24">UUID:</div><div class="pure-u-18-24 uuid">' + uuid + '</div>' +
+                   '<div class="pure-u-6-24">STATUS:</div><div class="pure-u-18-24 status">PENDING</div>' +
+                   '<div class="pure-u-6-24">RESULT:</div><div class="pure-u-18-24 result"></div>' +
+                   '</div>' +
+                   '<div class="pure-u-1-24"></div>';
+        
+        $("#content").append(html);
+
+        var objeto = {
+                identifier: uuid
+            };
+
+        runningPetitions.push(objeto);
+
+        recuperarInfoPeticion(uuid);
+    }
+
+    function recuperarInfoPeticion(uuid) {
+        $.ajax({
+            method: "GET",
+            url: "http://192.168.99.100:5000/api/predict/" + uuid
+        })
+        .done(function(data) {
+            var misElementos = $.grep(runningPetitions, function(element) {
+                return element.identifier == uuid;
             });
+
+            var miElemento = misElementos[0];
+
+            if (data.status == "PENDING" || data.status == "IN-PROCCESS") {
+                miElemento.timer = setTimeout(function() {
+                    recuperarInfoPeticion(uuid);
+                }, 1000);
+            }
+
+            updateStatus(data);
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            console.log("Error");
+            console.log(jqXHR);
+            console.log(textStatus);
+            console.log(errorThrown);
+        });
+    }
+
+    function updateStatus(data) {
+        $("#" + data.identifier + " .uuid").text(data.identifier);
+        $("#" + data.identifier + " .status").text(data.status);
+        $("#" + data.identifier + " .result").text(data.result);
+    }
+
+    function stopAllRequests() {
+        // Stop running timers
+        $.each(runningPetitions, function(index, element) {
+            if (typeof(element.timer) !== 'undefined') {
+                clearTimeout(element.timer);
+            }
         });
 
-        $("#get-button").on("click", function() {
-            var getIdValue = $("#id-value").val();
-            $.ajax({
-                method: "GET",
-                url: "http://192.168.99.100:5000/api/predict/" + getIdValue
-            })
-            .done(function(data) {
-                console.log("Data Saved: ");
-                console.log(data)
-            })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                console.log("Error");
-                console.log(jqXHR);
-                console.log(textStatus);
-                console.log(errorThrown);
-            });
-        });
-    });
+        // Empty content
+        $("#content").empty();
+    }
   </script
 </head>
 <body>
-  <div>
-    <textarea id="datos"></textarea>
+  <div class="pure-g">
+    <div class="pure-u-6-24"></div>
+    <div class="pure-u-12-24">
+      <form class="pure-form">
+        <fieldset class="pure-group">
+          <textarea id="datos" class="pure-input-1-2" placeholder="Textareas work too"></textarea>
+        </fieldset>
+      </form>
+    </div>
+    <div class="pure-u-6-24"></div>
+    <div class="pure-u-6-24"></div>
+    <div class="pure-u-12-24">
+      <button class="button-success pure-button" onclick="lanzarPeticion()">Lanzar nueva petición</button>
+      <button class="button-warning pure-button" onclick="stopAllRequests()">Parar todas las peticiones activas</button>
+    </div>
+    <div class="pure-u-6-24"></div>
   </div>
-  <div>
-    <input id="sending-button" type="button" value="Send data">
-  </div>
-  <br/>
-  <br/>
-  <div>
-    <input id="id-value" type="text"/>
-    <input id="get-button" type="button" value="Get data">
-  </div>
-  <div id="received-status">
+  <div id="content" class="pure-g" style="margin-top:50px;">
   </div>
 </body>

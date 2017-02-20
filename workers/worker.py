@@ -7,13 +7,13 @@ import pika
 from pymongo import MongoClient
 
 client = MongoClient(
-    "192.168.99.100",
+    "db",
     27017)
 db = client.mydatabase
 
 
 connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host="192.168.99.100", port=5672))
+    pika.ConnectionParameters(host="rabbit", port=5672))
 channel = connection.channel()
 
 channel.queue_declare(queue='task_queue', durable=True)
