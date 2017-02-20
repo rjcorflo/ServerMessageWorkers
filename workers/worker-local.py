@@ -3,12 +3,7 @@ import json
 import pika
 from pymongo import MongoClient
 from base.base_worker import BaseWorker
-
-MONGO_HOST = "192.168.99.100"
-MONGO_PORT = 27017
-
-RABBIT_HOST = "192.168.99.100"
-RABBIT_PORT = 5672
+from base.constantes import MONGO_HOST, MONGO_PORT, RABBIT_HOST, RABBIT_PORT
 
 class MainWorker(object):
     """ Main class
@@ -54,5 +49,4 @@ class MainWorker(object):
 
 
 if __name__ == "__main__":
-    MAIN = MainWorker()
-    MAIN.run()
+    MainWorker().run()

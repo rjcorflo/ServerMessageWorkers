@@ -1,8 +1,10 @@
+""" Web app main
+"""
 import uuid
-import pika
-import logging
 import json
-from flask import Flask, redirect, url_for, request, render_template, jsonify
+import logging
+import pika
+from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS, cross_origin
 from pymongo import MongoClient
 
@@ -17,6 +19,9 @@ db = client.mydatabase
 
 @app.route('/')
 def index():
+    """
+    Index function
+    """
     items = db.tasks.find()
     item_list = [item for item in items]
 
@@ -26,6 +31,8 @@ def index():
 @app.route('/api/predict', methods=['POST'])
 @cross_origin()
 def predict():
+    """ Ask for prediction
+    """
     # Creamos un identificador y lo almacenamos en BBD
     identifier = uuid.uuid4()
 
@@ -67,12 +74,12 @@ def predict():
     return jsonify({"identifier": identifier})
 
 
-"""
-Recupera el estado de una prediction
-"""
 @app.route('/api/predict/<id_prediction>', methods=['GET'])
 @cross_origin()
 def retrieve_predict(id_prediction):
+    """
+    Recupera el estado de una prediction
+    """
     # Recuperamos el item de la BBDD
     items = db.tasks.find({"identifier": str(id_prediction)})
 

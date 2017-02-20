@@ -35,7 +35,7 @@ services:
     links:
       - rabbit
       - db
-  worker:
+  worker-1:
     build:
       context: ./
       dockerfile: workers/Dockerfile
