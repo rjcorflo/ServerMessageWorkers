@@ -3,21 +3,21 @@ services:
   webpython:
     build:
       context: ./
-      dockerfile: server-python/Dockerfile
+      dockerfile: server-python/docker/Dockerfile
     command: python -u app.py
     ports:
       - "5000:5000"
     depends_on:
       - rabbit
     volumes:
-      - ./server-python:/todo
+      - ./server-python/code:/todo
     links:
       - rabbit
       - db
   webnginx:
     build:
       context: ./
-      dockerfile: server/server-nginx.docker
+      dockerfile: server-php/docker/server/server-nginx.docker
     volumes_from:
       - appphp
     ports:
@@ -27,24 +27,53 @@ services:
   appphp:
     build:
       context: ./
-      dockerfile: php/app-php-5.6.docker
+      dockerfile: server-php/docker/php/app-php-5.6.docker
     depends_on:
       - rabbit
     volumes:
-      - ./server-php:/var/www
+      - ./server-php/code:/var/www
     links:
       - rabbit
       - db
   worker-1:
     build:
       context: ./
-      dockerfile: workers/Dockerfile
+      dockerfile: workers/docker/Dockerfile
     command: python -u worker.py
     depends_on:
       - rabbit
       - db
     volumes:
-      - ./workers:/todo
+      - ./workers/code:/todo
+    links:
+      - rabbit
+      - db
+  worker-2:
+    image: gettyimages/spark
+    hostname: master
+    environment:
+      MASTER: spark://master:7077
+      SPARK_CONF_DIR: /conf
+      SPARK_PUBLIC_DNS: localhost
+    expose:
+      - 7001
+      - 7002
+      - 7003
+      - 7004
+      - 7005
+      - 7006
+      - 7077
+      - 6066
+    ports:
+      - 4040:4040
+      - 6066:6066
+      - 7077:7077
+      - 8080:8080
+    depends_on:
+      - rabbit
+      - db
+    volumes:
+      - ./workers/code:/todo
     links:
       - rabbit
       - db

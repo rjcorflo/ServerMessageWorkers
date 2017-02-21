@@ -1,4 +1,0 @@
-flask
-pymongo
-pika
-flask-cors
