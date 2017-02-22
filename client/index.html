@@ -45,7 +45,8 @@
         $.ajax({
                 method: "POST",
                 url: "http://192.168.99.100:5000/api/predict",
-                data: $.parseJSON($("#datos").val())
+                contentType: "application/json",
+                data: $("#datos").val()
         })
         .done(function(data) {
             addBloqueDatos(data.identifier);

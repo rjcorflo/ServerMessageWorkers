@@ -1,17 +1,23 @@
-#!/usr/bin/env python
-import time
+# from pyspark.ml.feature import StringIndexer
 import logging
-import json
-import random
-import pika
-from pymongo import MongoClient
+# $example on$
+from numpy import array
+# from math import sqrt
+from pyspark import SparkConf
+# $example off$
+from pyspark import SparkContext
+# $example on$
+from pyspark.mllib.clustering import KMeans, KMeansModel
 
-class BaseWorker(object):
+print "Successfully imported Spark Modules"
+
+class SparkWorker(object):
     """ Class for inheritance.
 
     Serve as base for inheritance.
     """
-    def __init__(self, data=None, database=None):
+    def __init__(self, data=None, database=None, context=None):
+        self.spark_context = context
         self.data = data
         self.database = database
 
@@ -22,12 +28,12 @@ class BaseWorker(object):
             {'identifier': self.data["identifier"]},
             {
                 "$set": {
-                    "status": status,
-                    "result": ""
+                    "status": status
                 }
             }
         )
         logging.error("Actualizados " + str(result.matched_count))
+
 
     def launch_processing(self):
         """ Process data.
@@ -36,18 +42,22 @@ class BaseWorker(object):
         self.__proccess()
         self.update_task_status("FINISHED")
 
-    def __proccess(self):
-        """ Method to be overriden
 
-        Should use self.data to access data to be processed.
-        """
-        valor_random = random.randint(5, 15)
-        time.sleep(valor_random)
+    def __proccess(self):
+        logging.error("DATA")
+        logging.error(self.data)
+
+        
+        same_model = KMeansModel.load(self.spark_context, "/todo/resultadocluster")
+        data = array([0.0, 0.0, 1.0, 1.0, 9.0, 8.0, 8.0, 9.0]).reshape(4, 2)
+	    #print(sameModel.computeCost(sc.parallelize(data)))
+        resultado = str(same_model.clusterCenters)
+
         self.database.tasks.update_one(
             {'identifier': self.data["identifier"]},
             {
                 "$set": {
-                    "result": str(valor_random)
+                    "result": resultado
                 }
             }
         )

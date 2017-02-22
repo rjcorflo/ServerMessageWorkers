@@ -12,14 +12,14 @@ app = Flask(__name__)
 CORS(app)
 
 client = MongoClient("db", 27017)
-db = client.tasks
+database = client.maindatabase
 
 @app.route('/')
 def index():
     """
     Index function
     """
-    items = db.tasks.find()
+    items = database.tasks.find()
     item_list = [item for item in items]
 
     return render_template('todo.html', items=item_list)
@@ -34,7 +34,8 @@ def predict():
     identifier = uuid.uuid4()
 
     # Recuperamos el JSON de la request
-    json_message = request.get_json()
+    json_message = request.get_json(force=True)
+    logging.error(json_message)
 
     item_doc = {
         "identifier": str(identifier),
@@ -42,7 +43,7 @@ def predict():
         "result": ""
     }
 
-    db.tasks.insert_one(item_doc)
+    database.tasks.insert_one(item_doc)
     logging.error("Registro insertado")
 
     # Adjuntamos el identificador para localizar la tarea desde los workers
@@ -78,7 +79,7 @@ def retrieve_predict(id_prediction):
     Recupera el estado de una prediction
     """
     # Recuperamos el item de la BBDD
-    items = db.tasks.find({"identifier": str(id_prediction)})
+    items = database.tasks.find({"identifier": str(id_prediction)})
 
     result = {}
     for item in items:

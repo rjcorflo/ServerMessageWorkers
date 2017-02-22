@@ -2,8 +2,19 @@
 import json
 import pika
 from pymongo import MongoClient
-from SparkWorker import SparkWorker
-from base.constantes import MONGO_HOST, MONGO_PORT, RABBIT_HOST, RABBIT_PORT
+
+# $example on$
+from numpy import array
+# from math import sqrt
+from pyspark import SparkConf
+# $example off$
+from pyspark import SparkContext
+# $example on$
+from pyspark.mllib.clustering import KMeans, KMeansModel
+
+from base.SparkWorker import SparkWorker
+from base.constantes import MONGO_DOCKER_SERVICE, MONGO_PORT, RABBIT_DOCKER_SERVICE, RABBIT_PORT
+
 
 class MainWorker(object):
     """ Main class
@@ -11,14 +22,15 @@ class MainWorker(object):
     To start script.
     """
     def __init__(self):
-        client = MongoClient(MONGO_HOST, MONGO_PORT)
-        self.database = client.mydatabase
+        client = MongoClient(MONGO_DOCKER_SERVICE, MONGO_PORT)
+        self.database = client.maindatabase
+        self.spark_context = SparkContext("local", "Simple App")
 
 
     def run(self):
         """ Run script """
         connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=RABBIT_HOST, port=RABBIT_PORT))
+            pika.ConnectionParameters(host=RABBIT_DOCKER_SERVICE, port=RABBIT_PORT))
         channel = connection.channel()
 
         channel.queue_declare(queue='task_queue', durable=True)
@@ -30,19 +42,16 @@ class MainWorker(object):
         channel.start_consuming()
 
 
-    def launch(self, worker=SparkWorker()):
-        """ Launch worker """
-        worker.launch_processing()
-
-
     def callback(self, canal, method, properties, body):
         """ Callback for task process """
         print " [x] Received task"
         # Get data
+        print body
         data = json.loads(body)
         # Init and launch worker
-        worker = SparkWorker(data=data, database=self.database)
-        self.launch(worker)
+        worker = SparkWorker(data=data, database=self.database, context=self.spark_context)
+        worker.launch_processing()
+
         # Acknowledge task processing
         print " [x] Done"
         canal.basic_ack(delivery_tag=method.delivery_tag)

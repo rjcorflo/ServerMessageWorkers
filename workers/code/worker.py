@@ -2,7 +2,7 @@
 import json
 import pika
 from pymongo import MongoClient
-from base.base_worker import BaseWorker
+from base.BaseWorker import BaseWorker
 from base.constantes import MONGO_DOCKER_SERVICE, MONGO_PORT, RABBIT_DOCKER_SERVICE, RABBIT_PORT
 
 class MainWorker(object):
@@ -12,7 +12,7 @@ class MainWorker(object):
     """
     def __init__(self):
         client = MongoClient(MONGO_DOCKER_SERVICE, MONGO_PORT)
-        self.database = client.tasks
+        self.database = client.maindatabase
 
 
     def run(self):
@@ -30,19 +30,16 @@ class MainWorker(object):
         channel.start_consuming()
 
 
-    def launch(self, worker=BaseWorker()):
-        """ Launch worker """
-        worker.launch_processing()
-
-
     def callback(self, canal, method, properties, body):
         """ Callback for task process """
         print " [x] Received task"
         # Get data
+        print body
         data = json.loads(body)
         # Init and launch worker
         worker = BaseWorker(data=data, database=self.database)
-        self.launch(worker)
+        worker.launch_processing()
+
         # Acknowledge task processing
         print " [x] Done"
         canal.basic_ack(delivery_tag=method.delivery_tag)

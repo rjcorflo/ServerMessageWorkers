@@ -12,7 +12,7 @@ class MainWorker(object):
     """
     def __init__(self):
         client = MongoClient(MONGO_HOST, MONGO_PORT)
-        self.database = client.mydatabase
+        self.database = client.maindatabase
 
 
     def run(self):
@@ -30,11 +30,6 @@ class MainWorker(object):
         channel.start_consuming()
 
 
-    def launch(self, worker=BaseWorker()):
-        """ Launch worker """
-        worker.launch_processing()
-
-
     def callback(self, canal, method, properties, body):
         """ Callback for task process """
         print " [x] Received task"
@@ -42,7 +37,8 @@ class MainWorker(object):
         data = json.loads(body)
         # Init and launch worker
         worker = BaseWorker(data=data, database=self.database)
-        self.launch(worker)
+        worker.launch_processing()
+
         # Acknowledge task processing
         print " [x] Done"
         canal.basic_ack(delivery_tag=method.delivery_tag)
