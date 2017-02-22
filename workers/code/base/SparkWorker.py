@@ -47,9 +47,8 @@ class SparkWorker(object):
         logging.error("DATA")
         logging.error(self.data)
 
-        
         same_model = KMeansModel.load(self.spark_context, "/todo/resultadocluster")
-        data = array([0.0, 0.0, 1.0, 1.0, 9.0, 8.0, 8.0, 9.0]).reshape(4, 2)
+        #data = array([0.0, 0.0, 1.0, 1.0, 9.0, 8.0, 8.0, 9.0]).reshape(4, 2)
 	    #print(sameModel.computeCost(sc.parallelize(data)))
         resultado = str(same_model.clusterCenters)
 
